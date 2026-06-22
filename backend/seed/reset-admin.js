@@ -9,9 +9,13 @@ const AdminUser = require('../models/AdminUser');
 async function resetAdmin() {
   await connectDB();
 
-  const email = process.env.ADMIN_EMAIL || 'admin@teamelite.com';
+  const email = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD || crypto.randomBytes(12).toString('base64url');
   const hash = await bcrypt.hash(password, 12);
+
+  if (!email) {
+    throw new Error('ADMIN_EMAIL is required to reset admin credentials.');
+  }
 
   await AdminUser.findOneAndUpdate(
     { email },

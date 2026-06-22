@@ -206,14 +206,27 @@ function pageTitle(title, text) {
 
 function updateCard(item) {
   return `
-    <article class="card update-card">
-      <div class="card-body">
-        <span class="tag">${item.category || 'News'}</span>
+    <article class="update-row">
+      <div class="update-row-date">
+        <span>${fmtDate(item.date)}</span>
+        <strong>${item.category || 'News'}</strong>
+      </div>
+      <div class="update-row-main">
         <h3>${item.title}</h3>
-        <div class="meta"><span>${fmtDate(item.date)}</span><span>${item.status || ''}</span></div>
         <p class="muted">${item.description || ''}</p>
       </div>
+      <span class="update-row-status">${item.status || 'Live'}</span>
     </article>
+  `;
+}
+
+function updatesBlock(items, initialCount = items.length) {
+  if (!items.length) return empty(gameEmpty('updates'));
+
+  return `
+    <div class="updates-feed">
+      ${items.slice(0, initialCount).map(updateCard).join('')}
+    </div>
   `;
 }
 
@@ -259,6 +272,78 @@ function playerCard(player) {
       </div>
     </article>
   `;
+}
+
+function rosterBlock(items) {
+  if (!items.length) return empty(gameEmpty('roster'));
+
+  return `
+    <div class="roster-carousel">
+      <div class="roster-track grid four roster-grid" data-roster-track>
+        ${items.map(playerCard).join('')}
+      </div>
+      <div class="roster-controls" aria-label="Roster carousel controls">
+        <button class="roster-nav-btn" type="button" data-roster-prev aria-label="Previous roster player">&lsaquo;</button>
+        <button class="roster-nav-btn" type="button" data-roster-next aria-label="Next roster player">&rsaquo;</button>
+      </div>
+    </div>
+  `;
+}
+
+function bindRosterCarousel() {
+  document.querySelectorAll('.roster-carousel').forEach((carousel) => {
+    const track = carousel.querySelector('[data-roster-track]');
+    const previous = carousel.querySelector('[data-roster-prev]');
+    const next = carousel.querySelector('[data-roster-next]');
+    if (!track || !previous || !next || carousel.dataset.rosterBound) return;
+
+    carousel.dataset.rosterBound = 'true';
+
+    const updateActiveCard = () => {
+      const cards = [...track.querySelectorAll('.player-card')];
+      if (!cards.length) return;
+
+      const trackBounds = track.getBoundingClientRect();
+      const trackCenter = trackBounds.left + trackBounds.width / 2;
+      let activeCard = cards[0];
+      let closestDistance = Infinity;
+
+      cards.forEach((card) => {
+        const cardBounds = card.getBoundingClientRect();
+        const cardCenter = cardBounds.left + cardBounds.width / 2;
+        const distance = Math.abs(trackCenter - cardCenter);
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          activeCard = card;
+        }
+      });
+
+      cards.forEach((card) => card.classList.toggle('is-active', card === activeCard));
+    };
+
+    const updateControls = () => {
+      const maxScroll = track.scrollWidth - track.clientWidth - 2;
+      const canScroll = maxScroll > 0;
+      previous.disabled = !canScroll || track.scrollLeft <= 2;
+      next.disabled = !canScroll || track.scrollLeft >= maxScroll;
+      updateActiveCard();
+    };
+
+    const scrollRoster = (direction) => {
+      const card = track.querySelector('.player-card');
+      const style = getComputedStyle(track);
+      const gap = parseFloat(style.columnGap || style.gap) || 0;
+      const distance = card ? card.getBoundingClientRect().width + gap : track.clientWidth * 0.85;
+      track.scrollBy({ left: direction * distance, behavior: 'smooth' });
+    };
+
+    previous.addEventListener('click', () => scrollRoster(-1));
+    next.addEventListener('click', () => scrollRoster(1));
+    track.addEventListener('scroll', updateControls, { passive: true });
+    window.addEventListener('resize', updateControls);
+    updateControls();
+  });
 }
 
 function aboutOrgSection() {
@@ -608,11 +693,17 @@ function achievementCard(item) {
   const hasLongDescription = description.length > 118;
 
   return `
-    <article class="card achievement-card">
-      <div class="card-body">
-        <span class="tag">${item.position}</span>
-        <h3>${item.title}</h3>
-        <div class="meta"><span>${item.tournamentName}</span><span>${item.year || fmtDate(item.date)}</span><span>${item.tier || ''}</span><span>${item.prizePool || ''}</span></div>
+    <article class="achievement-record">
+      <div class="achievement-position">
+        <span>Placement</span>
+        <strong>${item.position}</strong>
+      </div>
+      <div class="achievement-main">
+        <div class="achievement-title-row">
+          <h3>${item.title}</h3>
+          <span>${item.year || fmtDate(item.date)}</span>
+        </div>
+        <div class="meta"><span>${item.tournamentName}</span><span>${item.tier || 'Milestone'}</span><span>${item.prizePool || 'Prize TBA'}</span></div>
         <p class="muted achievement-desc ${hasLongDescription ? 'is-collapsed' : ''}">${description}</p>
         ${hasLongDescription ? '<button class="text-button" type="button" data-toggle-achievement-desc>Read more</button>' : ''}
       </div>
@@ -625,10 +716,10 @@ function achievementsBlock(items, initialCount = 6) {
 
   return `
     <div class="achievement-block">
-      <div class="grid achievement-grid">
+      <div class="achievement-records">
         ${items.map((item, index) => {
           const card = achievementCard(item);
-          return index >= initialCount ? card.replace('achievement-card', 'achievement-card achievement-extra is-hidden') : card;
+          return index >= initialCount ? card.replace('achievement-record', 'achievement-record achievement-extra is-hidden') : card;
         }).join('')}
       </div>
       ${items.length > initialCount ? `
@@ -872,11 +963,11 @@ function renderHome(root) {
       </section>
       <section class="section" id="updates"><div class="container">
         <div class="section-head"><div><span class="eyebrow">Latest</span><h2>Updates</h2></div></div>
-        <div class="grid">${gameItems('updates').slice(0, 3).map(updateCard).join('') || empty(gameEmpty('updates'))}</div>
+        ${updatesBlock(gameItems('updates'), 3)}
       </div></section>
       <section class="section" id="roster"><div class="container">
         <div class="section-head"><div><span class="eyebrow">Squad</span><h2>Roster</h2></div></div>
-        <div class="grid four roster-grid">${gameItems('players').map(playerCard).join('') || empty(gameEmpty('roster'))}</div>
+        ${rosterBlock(gameItems('players'))}
       </div></section>
       <section class="section" id="matches"><div class="container">
         <div class="section-head"><div><span class="eyebrow">Schedule</span><h2>Matches</h2></div></div>
@@ -907,6 +998,7 @@ function renderHome(root) {
   bindGalleryControls();
   bindContactForm();
   bindMatchExplorer();
+  bindRosterCarousel();
   scrollToHashSection();
 }
 
@@ -919,6 +1011,7 @@ function renderCollection(root, title, text, html) {
   bindGalleryControls();
   bindContactForm();
   bindMatchExplorer();
+  bindRosterCarousel();
 }
 
 async function loadData() {
@@ -937,8 +1030,8 @@ async function loadData() {
 function renderPage(root) {
   if (page === 'home') renderHome(root);
   if (page === 'about') renderCollection(root, 'About Org', 'Organization profile, leadership, former players, region, and national identity.', aboutOrgSection());
-  if (page === 'updates') renderCollection(root, 'Latest Updates', 'News, announcements, and competitive notes from Team Elite.', `<div class="grid">${gameItems('updates').map(updateCard).join('') || empty(gameEmpty('updates'))}</div>`);
-  if (page === 'roster') renderCollection(root, 'Roster', 'The active lineup carrying Team Elite into every lobby.', `<div class="grid four roster-grid">${gameItems('players').map(playerCard).join('') || empty(gameEmpty('roster'))}</div>`);
+  if (page === 'updates') renderCollection(root, 'Latest Updates', 'News, announcements, and competitive notes from Team Elite.', updatesBlock(gameItems('updates')));
+  if (page === 'roster') renderCollection(root, 'Roster', 'The active lineup carrying Team Elite into every lobby.', rosterBlock(gameItems('players')));
   if (page === 'matches') renderCollection(root, 'Matches', 'Tournament schedule, completion status, and selectable match stats.', matchesSection());
   if (page === 'achievements') renderCollection(root, 'Achievements', 'Trophies, placements, qualifications, and milestone finishes.', achievementsBlock(gameItems('achievements')));
   if (page === 'gallery') renderCollection(root, 'Gallery', 'Team moments from training, tournaments, and wins.', galleryBlock(gameItems('gallery')));

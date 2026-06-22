@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const connectDB = require('../config/db');
 const AdminUser = require('../models/AdminUser');
@@ -11,6 +12,7 @@ const Achievement = require('../models/Achievement');
 const Gallery = require('../models/Gallery');
 const Sponsor = require('../models/Sponsor');
 const Setting = require('../models/Setting');
+const defaultAchievements = require('../data/defaultAchievements');
 
 const placeholder = (label) => `https://placehold.co/900x600/07111f/22d3ee?text=${encodeURIComponent(label)}`;
 
@@ -28,9 +30,16 @@ async function seed() {
     Setting.deleteMany({})
   ]);
 
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD || crypto.randomBytes(12).toString('base64url');
+
+  if (!adminEmail) {
+    throw new Error('ADMIN_EMAIL is required before seeding admin credentials.');
+  }
+
   await AdminUser.create({
-    email: 'admin@teamelite.com',
-    password: await bcrypt.hash('admin123', 12)
+    email: adminEmail,
+    password: await bcrypt.hash(adminPassword, 12)
   });
 
   await Setting.create({
@@ -187,140 +196,10 @@ async function seed() {
     }
   ]);
 
-  await Achievement.insertMany([
-    {
-      title: 'FFIC 2021 Fall Champions',
-      tournamentName: 'Free Fire India Championship 2021 Fall',
-      position: '1st Place',
-      year: '2021',
-      tier: 'A-Tier',
-      date: new Date('2021-10-01'),
-      trophyImage: placeholder('FFIC 2021 Fall'),
-      prizePool: 'Over $46,000',
-      description: 'Team Elite won India\'s biggest official Free Fire tournament at the time, making this the organization\'s most important title.'
-    },
-    {
-      title: 'Free Fire Tri Series Runner-up',
-      tournamentName: 'Free Fire Tri Series 2021',
-      position: '2nd Place',
-      year: '2021',
-      tier: 'A-Tier',
-      date: new Date('2021-04-01'),
-      trophyImage: placeholder('Tri Series'),
-      prizePool: '',
-      description: 'A strong runner-up finish against top Indian teams during Team Elite\'s golden year.'
-    },
-    {
-      title: 'FFIC 2021 Spring Top 3',
-      tournamentName: 'Free Fire India Championship 2021 Spring',
-      position: '3rd Place',
-      year: '2021',
-      tier: 'A-Tier',
-      date: new Date('2021-03-01'),
-      trophyImage: placeholder('FFIC Spring'),
-      prizePool: '',
-      description: 'Finished top 3 nationally in one of India\'s premier Free Fire events.'
-    },
-    {
-      title: 'FFPL India 2021 Summer Top 3',
-      tournamentName: 'Free Fire Pro League India 2021 Summer',
-      position: '3rd Place',
-      year: '2021',
-      tier: 'A-Tier',
-      date: new Date('2021-07-01'),
-      trophyImage: placeholder('FFPL Summer'),
-      prizePool: '',
-      description: 'Secured a top 3 finish in one of India\'s leading Free Fire leagues.'
-    },
-    {
-      title: 'Snapdragon Conquest Pro Series S2',
-      tournamentName: 'Snapdragon Conquest Free Fire Pro Series Season 2',
-      position: '5th Place',
-      year: '2021',
-      tier: 'Major',
-      date: new Date('2021-08-01'),
-      trophyImage: placeholder('Snapdragon'),
-      prizePool: '',
-      description: 'Finished 5th in a competitive national pro series field.'
-    },
-    {
-      title: 'Asia Championship Qualification',
-      tournamentName: 'Free Fire Asia Championship 2021',
-      position: 'Top 8 Asia',
-      year: '2021',
-      tier: 'International',
-      date: new Date('2021-11-01'),
-      trophyImage: placeholder('Asia Championship'),
-      prizePool: '',
-      description: 'Qualified internationally and finished top 8 in Asia.'
-    },
-    {
-      title: 'Pahadi Tri Series MVP',
-      tournamentName: 'Free Fire Tri Series 2021',
-      position: 'MVP',
-      year: '2021',
-      tier: 'Individual Award',
-      date: new Date('2021-04-01'),
-      trophyImage: placeholder('Pahadi MVP'),
-      prizePool: '',
-      description: 'Pahadi earned MVP honors for his performance in Free Fire Tri Series 2021.'
-    },
-    {
-      title: 'Pahadi Fan Vote MVP',
-      tournamentName: 'Conquest Free Fire Open Season 1',
-      position: 'MVP Fan Vote',
-      year: '2021',
-      tier: 'Individual Award',
-      date: new Date('2021-01-01'),
-      trophyImage: placeholder('Fan Vote MVP'),
-      prizePool: '',
-      description: 'Pahadi won the fan-voted MVP award in Conquest Free Fire Open Season 1.'
-    },
-    {
-      title: 'Killer FFIC Grand Finals MVP',
-      tournamentName: 'Free Fire India Championship 2021 Fall',
-      position: 'Most Kills',
-      year: '2021',
-      tier: 'Individual Award',
-      date: new Date('2021-10-01'),
-      trophyImage: placeholder('Killer MVP'),
-      prizePool: '',
-      description: 'Killer was Grand Finals MVP for most kills during Team Elite\'s FFIC 2021 Fall championship run.'
-    },
-    {
-      title: 'Killer FFPL League Stage MVP',
-      tournamentName: 'Free Fire Pro League India 2021 Summer',
-      position: 'Most Kills',
-      year: '2021',
-      tier: 'Individual Award',
-      date: new Date('2021-07-01'),
-      trophyImage: placeholder('FFPL MVP'),
-      prizePool: '',
-      description: 'Killer earned League Stage MVP for most kills in FFPL India 2021 Summer.'
-    },
-    {
-      title: 'Skyesports Pro League 2025',
-      tournamentName: 'Skyesports Pro League 2025',
-      position: '4th Place',
-      year: '2025',
-      tier: 'Recent Result',
-      date: new Date('2025-01-01'),
-      trophyImage: placeholder('Skyesports 2025'),
-      prizePool: '',
-      description: 'A recent 4th place result that keeps Team Elite visible in the modern competitive scene.'
-    },
-    {
-      title: 'FFWS Malaysia 2025 Spring',
-      tournamentName: 'Free Fire World Series Malaysia 2025 Spring',
-      position: 'Top 5',
-      year: '2025',
-      tier: 'International',
-      date: new Date('2025-05-01'),
-      trophyImage: placeholder('FFWS Malaysia'),
-      prizePool: '',
-      description: 'Participated internationally and finished top 5 at Free Fire World Series Malaysia 2025 Spring.'
-    }
-  ]);
+  await Achievement.insertMany(defaultAchievements.map((achievement) => ({
+    ...achievement,
+    trophyImage: placeholder(achievement.title)
+  })));
 
   // Gallery is intentionally empty for now; add photos later from the admin panel.
 
@@ -330,7 +209,10 @@ async function seed() {
     { sponsorName: 'PulseNet', logo: placeholder('PulseNet'), websiteLink: 'https://example.com', status: 'active' }
   ]);
 
-  console.log('Seed complete. Admin: admin@teamelite.com / admin123');
+  console.log(`Seed complete. Admin email: ${adminEmail}`);
+  if (!process.env.ADMIN_PASSWORD) {
+    console.log(`Generated admin password: ${adminPassword}`);
+  }
   await mongoose.disconnect();
 }
 

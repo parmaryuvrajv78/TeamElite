@@ -1,5 +1,6 @@
 const express = require('express');
 const Achievement = require('../models/Achievement');
+const defaultAchievements = require('../data/defaultAchievements');
 const protect = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { cleanBody, imageUrl } = require('./helpers');
@@ -8,7 +9,8 @@ const router = express.Router();
 
 router.get('/', async (req, res, next) => {
   try {
-    res.json(await Achievement.find({}).sort({ date: -1 }));
+    const achievements = await Achievement.find({}).sort({ date: -1 });
+    res.json(achievements.length ? achievements : defaultAchievements);
   } catch (error) {
     next(error);
   }
