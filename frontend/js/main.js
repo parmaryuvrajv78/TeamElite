@@ -19,6 +19,59 @@ const games = {
   bgmi: { label: 'BGMI', logo: `${SUPABASE_ASSET_BASE}/brand/bgmi-logo.png` }
 };
 
+const defaultAchievements = [
+  {
+    title: 'Champions - FFIC 2021 Fall',
+    tournamentName: 'Free Fire India Championship 2021 Fall',
+    position: '1st Place',
+    year: '2021',
+    tier: 'National Championship',
+    date: '2021-10-01',
+    prizePool: '$46,000+',
+    description: 'Team Elite won India\'s biggest Free Fire tournament at the time. This title is widely considered the organization\'s greatest competitive achievement.'
+  },
+  {
+    title: 'Runner-up - Free Fire Tri Series 2021',
+    tournamentName: 'Free Fire Tri Series 2021',
+    position: '2nd Place',
+    year: '2021',
+    tier: 'Major National Event',
+    date: '2021-04-01',
+    prizePool: 'About $10,000',
+    description: 'A runner-up finish in one of the strongest Indian Free Fire events before FFIC Fall, proving Team Elite belonged among the country\'s elite teams.'
+  },
+  {
+    title: '3rd Place - FFIC 2021 Spring',
+    tournamentName: 'Free Fire India Championship 2021 Spring',
+    position: '3rd Place',
+    year: '2021',
+    tier: 'National Championship',
+    date: '2021-03-01',
+    prizePool: 'Prize TBA',
+    description: 'Team Elite finished on the podium among India\'s best teams and qualified as one of the top contenders in the country.'
+  },
+  {
+    title: '3rd Place - FFPL India 2021 Summer',
+    tournamentName: 'Free Fire Pro League India 2021 Summer',
+    position: '3rd Place',
+    year: '2021',
+    tier: 'Major National League',
+    date: '2021-07-01',
+    prizePool: 'Prize TBA',
+    description: 'Another major national podium finish that demonstrated Team Elite\'s consistent top-tier performance throughout 2021.'
+  },
+  {
+    title: '8th Place - Free Fire Asia Championship 2021',
+    tournamentName: 'Free Fire Asia Championship 2021',
+    position: '8th Place',
+    year: '2021',
+    tier: 'International',
+    date: '2021-11-01',
+    prizePool: 'Prize TBA',
+    description: 'Team Elite represented India on the international stage, competing against top teams from across Asia in one of the highest-level tournaments the team has attended.'
+  }
+];
+
 const navItems = [
   ['index.html', 'Home'],
   ['about.html', 'About'],
@@ -694,16 +747,17 @@ function achievementCard(item) {
 
   return `
     <article class="achievement-record">
+      <div class="achievement-index" aria-hidden="true"></div>
       <div class="achievement-position">
-        <span>Placement</span>
+        <span>${item.year || fmtDate(item.date)}</span>
         <strong>${item.position}</strong>
       </div>
       <div class="achievement-main">
         <div class="achievement-title-row">
           <h3>${item.title}</h3>
-          <span>${item.year || fmtDate(item.date)}</span>
+          <span>${item.tier || 'Milestone'}</span>
         </div>
-        <div class="meta"><span>${item.tournamentName}</span><span>${item.tier || 'Milestone'}</span><span>${item.prizePool || 'Prize TBA'}</span></div>
+        <div class="achievement-meta"><span>${item.tournamentName}</span><span>${item.prizePool || 'Prize TBA'}</span></div>
         <p class="muted achievement-desc ${hasLongDescription ? 'is-collapsed' : ''}">${description}</p>
         ${hasLongDescription ? '<button class="text-button" type="button" data-toggle-achievement-desc>Read more</button>' : ''}
       </div>
@@ -713,9 +767,16 @@ function achievementCard(item) {
 
 function achievementsBlock(items, initialCount = 6) {
   if (!items.length) return empty(gameEmpty('achievement'));
+  const podiumCount = items.filter((item) => /1st|2nd|3rd/i.test(item.position || '')).length;
+  const internationalCount = items.filter((item) => /international|asia/i.test(`${item.tier || ''} ${item.tournamentName || ''}`)).length;
 
   return `
     <div class="achievement-block">
+      <div class="achievement-summary">
+        <div><span>Records</span><strong>${items.length}</strong></div>
+        <div><span>Podiums</span><strong>${podiumCount}</strong></div>
+        <div><span>International</span><strong>${internationalCount}</strong></div>
+      </div>
       <div class="achievement-records">
         ${items.map((item, index) => {
           const card = achievementCard(item);
@@ -1024,7 +1085,14 @@ async function loadData() {
     api('/api/gallery'),
     api('/api/sponsors')
   ]);
-  Object.assign(state, { updates, players, matches, achievements, gallery, sponsors });
+  Object.assign(state, {
+    updates,
+    players,
+    matches,
+    achievements: achievements.length ? achievements : defaultAchievements,
+    gallery,
+    sponsors
+  });
 }
 
 function renderPage(root) {
