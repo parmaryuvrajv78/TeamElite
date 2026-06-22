@@ -19,6 +19,24 @@ const games = {
   bgmi: { label: 'BGMI', logo: `${SUPABASE_ASSET_BASE}/brand/bgmi-logo.png` }
 };
 
+const defaultSettings = {
+  logo: '/assets/logo.png',
+  heroTitle: 'Team Elite',
+  heroSubtitle: 'FFIC 2021 Fall Champions and one of India\'s most decorated Free Fire rosters.',
+  aboutText: 'Team Elite is a championship Free Fire roster known for national titles, Asia-level qualification, and elite individual firepower.',
+  founder: 'To be announced',
+  coFounder: 'To be announced',
+  formerPlayers: 'Killer',
+  region: 'South Asia',
+  nation: 'India',
+  nationFlag: 'IN',
+  email: 'contact@teamelite.com',
+  instagram: '#',
+  youtube: '#',
+  discord: '#',
+  facebook: '#'
+};
+
 const defaultAchievements = [
   {
     title: 'Champions - FFIC 2021 Fall',
@@ -1076,16 +1094,26 @@ function renderCollection(root, title, text, html) {
 }
 
 async function loadData() {
-  state.settings = await api('/api/settings');
-  const [updates, players, matches, achievements, gallery, sponsors] = await Promise.all([
-    api('/api/updates'),
-    api('/api/players'),
-    api('/api/matches'),
-    api('/api/achievements'),
-    api('/api/gallery'),
-    api('/api/sponsors')
+  const safeApi = async (path, fallback) => {
+    try {
+      return await api(path);
+    } catch (error) {
+      console.warn(`Using fallback data for ${path}:`, error.message);
+      return fallback;
+    }
+  };
+
+  const [settings, updates, players, matches, achievements, gallery, sponsors] = await Promise.all([
+    safeApi('/api/settings', defaultSettings),
+    safeApi('/api/updates', []),
+    safeApi('/api/players', []),
+    safeApi('/api/matches', []),
+    safeApi('/api/achievements', defaultAchievements),
+    safeApi('/api/gallery', []),
+    safeApi('/api/sponsors', [])
   ]);
   Object.assign(state, {
+    settings,
     updates,
     players,
     matches,
