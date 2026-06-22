@@ -1,0 +1,1 @@
+window.API_BASE_URL = 'https://your-render-api.onrender.com';

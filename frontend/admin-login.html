@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Login | Team Elite</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="login-shell">
+    <form class="login-card" id="login-form">
+      <div class="login-card-top">
+        <span class="eyebrow">Admin</span>
+        <button class="theme-toggle login-theme-toggle" type="button" data-theme-toggle aria-label="Switch theme">
+          <span class="theme-toggle-track" aria-hidden="true"></span>
+          <span data-theme-label>Light</span>
+        </button>
+      </div>
+      <h1 style="font-size:2.4rem">Team Elite</h1>
+      <p class="muted">Sign in to manage updates, roster, matches, achievements, gallery, sponsors, and settings.</p>
+      <label>Email<input name="email" type="email" value="admin@teamelite.com" required></label>
+      <label>Password<input name="password" type="password" value="admin123" required></label>
+      <button class="btn" type="submit">Login</button>
+      <div class="message" id="login-message"></div>
+    </form>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    bindThemeToggle();
+
+    document.getElementById('login-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = document.getElementById('login-message');
+      const form = new FormData(event.currentTarget);
+      try {
+        const data = await api('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify(Object.fromEntries(form))
+        });
+        localStorage.setItem('teamEliteToken', data.token);
+        location.href = 'admin.html';
+      } catch (error) {
+        message.textContent = error.message;
+      }
+    });
+  </script>
+</body>
+</html>
