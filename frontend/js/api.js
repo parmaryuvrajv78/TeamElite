@@ -1,5 +1,9 @@
 const API_BASE = window.API_BASE_URL || '';
 const THEME_KEY = 'teamEliteTheme';
+const THEME_CHROME_COLORS = {
+  light: '#f4f8fb',
+  dark: '#030712'
+};
 
 function getTheme() {
   return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
@@ -9,7 +13,26 @@ function applyTheme(theme = getTheme()) {
   const nextTheme = theme === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.theme = nextTheme;
   localStorage.setItem(THEME_KEY, nextTheme);
+  updateThemeChrome(nextTheme);
   updateThemeButtons(nextTheme);
+}
+
+function updateThemeChrome(theme = getTheme()) {
+  let themeColor = document.querySelector('meta[name="theme-color"]');
+  if (!themeColor) {
+    themeColor = document.createElement('meta');
+    themeColor.name = 'theme-color';
+    document.head.appendChild(themeColor);
+  }
+  themeColor.content = THEME_CHROME_COLORS[theme] || THEME_CHROME_COLORS.light;
+
+  let colorScheme = document.querySelector('meta[name="color-scheme"]');
+  if (!colorScheme) {
+    colorScheme = document.createElement('meta');
+    colorScheme.name = 'color-scheme';
+    document.head.appendChild(colorScheme);
+  }
+  colorScheme.content = theme === 'dark' ? 'dark light' : 'light dark';
 }
 
 function updateThemeButtons(theme = getTheme()) {
